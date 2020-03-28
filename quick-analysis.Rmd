@@ -1,17 +1,19 @@
 ---
 title: "quick-analysis by state and WA county"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 A quick visualization of the published NYT data on US Covid-19 cases by state.
 Source data may be found here: <https://github.com/nytimes/covid-19-data>
 
 There are two types of graphs here currently:
+
 * Linear - this is just an absolute count reported by date
 * log(2) - this is a log(2) graph of count by date, intended to help display the doubling trend
 
+Note that this data is historical, not predictive. It's intended to help illustrate what has happened so far.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -37,6 +39,8 @@ max_y <- ceiling(max(log2(df_us_states['cases'])))
 powers_of_2 = 2 ** (1:max_y)
 
 ```
+
+## US Data - Cases
 
 ```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE}
 p <- ggplot(df_us_states, aes(x=date, y=cases)) +
@@ -64,6 +68,7 @@ p <- ggplot(df_us_states, aes(x=date, y=cases)) +
 
 ```
 
+## US Data - Deaths
 
 ```{r, fig.width=12, fig.height=10, echo=FALSE}
 p <- ggplot(df_us_states, aes(x=date, y=deaths)) +
@@ -96,6 +101,8 @@ p <- ggplot(df_us_states_zero_deaths, aes(x=date, y=deaths)) +
  print(p)
 
 ```
+
+## Washington Counties - Cases
 
 ```{r, fig.width=12, fig.height=12, echo=FALSE}
 # let's pull in counties and look at washington
@@ -140,6 +147,8 @@ p <- ggplot(df_wa_counties, aes(x=date, y=cases)) +
 
 ```
 
+## Washington Counties - Deaths
+
 ```{r, fig.width=12, fig.height=10, echo=FALSE}
 
 df_wa_counties_with_deaths <- df_wa_counties %>%
@@ -161,6 +170,77 @@ p <- ggplot(df_wa_counties_with_deaths, aes(x=date, y=deaths)) +
   geom_col() + 
   facet_wrap( . ~ county) +
   ggtitle("Covid Deaths by WA County - log(2)") +
+  scale_y_continuous(trans='log2', breaks=powers_of_2, labels=powers_of_2) +
+  theme(axis.text.y = element_text(size = 6)) +
+  theme(plot.title = element_text(size=12)) +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+## California Counties - Cases
+
+```{r, fig.width=12, fig.height=10, echo=FALSE}
+
+df_ca_counties <- df_us_counties %>%
+  select(date, state, county, cases, deaths) %>%
+  filter(state == 'California')
+
+```
+
+```{r, fig.width=12, fig.height=10, echo=FALSE}
+
+p <- ggplot(df_ca_counties, aes(x=date, y=cases)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Cases by CA County - linear") +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+```{r, fig.width=12, fig.height=12, echo=FALSE}
+
+p <- ggplot(df_ca_counties, aes(x=date, y=cases)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Cases by CA County - log(2)") +
+  scale_y_continuous(trans='log2', breaks=powers_of_2, labels=powers_of_2) +
+  theme(axis.text.y = element_text(size = 6)) +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+## California Counties - Deaths
+
+```{r, fig.width=12, fig.height=10, echo=FALSE}
+
+df_ca_counties_with_deaths <- df_ca_counties %>%
+  filter(deaths > 0)
+
+p <- ggplot(df_ca_counties_with_deaths, aes(x=date, y=deaths)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Deaths by CA County - linear") +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+```
+
+```{r, fig.width=12, fig.height=12, echo=FALSE}
+
+p <- ggplot(df_ca_counties_with_deaths, aes(x=date, y=deaths)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Deaths by CA County - log(2)") +
   scale_y_continuous(trans='log2', breaks=powers_of_2, labels=powers_of_2) +
   theme(axis.text.y = element_text(size = 6)) +
   theme(plot.title = element_text(size=12)) +
