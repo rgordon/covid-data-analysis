@@ -1,0 +1,153 @@
+---
+title: "quick-analysis by state and WA county"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(lubridate)
+library(readr)
+
+```
+
+```{r}
+us_states_raw <- read_csv("~/projects/covid-19-data/us-states.csv",
+                      col_types = cols(date = col_date(format = "%Y-%m-%d")))
+
+#us_states$state <- as.factor(as.factor(us_states$state))
+#us_states <- mutate_if(us_states, is.character, as.factor)
+
+df_us_states <- us_states_raw %>%
+  mutate_if(is.character, as.factor) 
+  
+```
+
+```{r, fig.width=12, fig.height=10}
+p <- ggplot(df_us_states, aes(x=date, y=cases)) +
+  geom_col() + 
+  facet_wrap( . ~ state) +
+  ggtitle("Covid cases by state - linear") +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+```{r, fig.width=12, fig.height=10}
+p <- ggplot(df_us_states, aes(x=date, y=cases)) +
+  geom_col() + 
+  facet_wrap( . ~ state) +
+  ggtitle("Covid cases by state - log(2)") +
+  scale_y_continuous(trans='log2') +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+
+```{r, fig.width=12, fig.height=10}
+p <- ggplot(df_us_states, aes(x=date, y=deaths)) +
+  geom_col() + 
+  facet_wrap( . ~ state) +
+  ggtitle("Covid Deaths by state - linear") +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+```{r, fig.width=12, fig.height=10}
+
+# strip out the zero's to prevent warnings about taking their log
+df_us_states_zero_deaths <- df_us_states %>%
+  select(date, state, deaths) %>%
+  filter(deaths > 0)
+
+p <- ggplot(df_us_states_zero_deaths, aes(x=date, y=deaths)) +
+  geom_col() + 
+  facet_wrap( . ~ state) +
+  ggtitle("Covid deaths by state - log(2)") +
+  scale_y_continuous(trans='log2') +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+```{r, fig.width=12, fig.height=10}
+# let's pull in counties and look at washington
+
+us_counties_raw <- read_csv("~/projects/covid-19-data/us-counties.csv",
+                      col_types = cols(date = col_date(format = "%Y-%m-%d")))
+
+df_us_counties <- us_counties_raw %>%
+  mutate_if(is.character, as.factor) 
+
+df_wa_counties <- df_us_counties %>%
+  select(date, state, county, cases, deaths) %>%
+  filter(state == 'Washington')
+
+```
+
+```{r, fig.width=12, fig.height=10}
+
+p <- ggplot(df_wa_counties, aes(x=date, y=cases)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Cases by WA County - linear") +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+```{r, fig.width=12, fig.height=10}
+
+p <- ggplot(df_wa_counties, aes(x=date, y=cases)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Cases by WA County - log(2)") +
+  scale_y_continuous(trans='log2') +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
+
+```{r, fig.width=12, fig.height=10}
+
+df_wa_counties_with_deaths <- df_wa_counties %>%
+  filter(deaths > 0)
+
+p <- ggplot(df_wa_counties_with_deaths, aes(x=date, y=deaths)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Deaths by WA County - linear") +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+```
+
+```{r, fig.width=12, fig.height=10}
+
+p <- ggplot(df_wa_counties_with_deaths, aes(x=date, y=deaths)) +
+  geom_col() + 
+  facet_wrap( . ~ county) +
+  ggtitle("Covid Deaths by WA County - log(2)") +
+  scale_y_continuous(trans='log2') +
+  theme(plot.title = element_text(size=12)) +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+ print(p)
+
+```
