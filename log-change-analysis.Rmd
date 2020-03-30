@@ -5,6 +5,8 @@ output:
   html_document: default
 ---
 
+Another experiment to look at rate of change. Idea here is to compare the reported change against the cumulative sum. 
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -30,6 +32,7 @@ powers_of_2 = 2 ** (1:max_y)
 
 ```
 
+## Extract daily changes
 ```{r, echo=FALSE}
 # compute lag so that we can see actual change day by day
 df_us_states <- df_us_states %>%
@@ -39,6 +42,7 @@ df_us_states <- df_us_states %>%
 
 ```
 
+### Daily Cases
 
 ```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE}
 p <- ggplot(subset(df_us_states, !is.na(delta_cases)), aes(x=date, y=delta_cases)) +
@@ -51,6 +55,8 @@ p <- ggplot(subset(df_us_states, !is.na(delta_cases)), aes(x=date, y=delta_cases
 
 ```
 
+### Daily Deaths
+
 ```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE}
 p <- ggplot(subset(df_us_states, !is.na(delta_deaths)), aes(x=date, y=delta_deaths)) +
   geom_col() + 
@@ -62,14 +68,17 @@ p <- ggplot(subset(df_us_states, !is.na(delta_deaths)), aes(x=date, y=delta_deat
 
 ```
 
-## Change over Cumuluative Sum
+## Change over Cumulative Sum
+
+### Change in Cases over Cumulative Sum
+
+Use the log of the cumulative sum to better scale the values.
 
 ```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE, warning=FALSE}
 p <- ggplot(df_us_states, aes(x=cases, y=delta_cases)) +
   geom_line() + 
   facet_wrap( . ~ state) +
   scale_x_continuous(trans='log10') +
-  #scale_y_continuous(trans='log10') +
   ggtitle("Covid cases rate of change by state - linear/log-x") +
   #theme(axis.text.y = element_text(size = 6)) +
   theme(strip.text.x = element_text(size = 9)) +
@@ -80,8 +89,10 @@ print(p)
 ```
 ## Log of Change Over Cumulative Sum
 
-An experimental view, looking for way to measure when the rate of change has dropped.
-Its too granular still, i need to aggegrate it at weekly intervals possibly.
+Linear values are skewed by higher-magnitude values, so use a log(10) on each axis.
+this better fits the exponential nature of the data anyway.
+
+### Log/Log of Cases Over Cumulative Sum
 
 ```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE, warning=FALSE}
 #filtered_cases <- subset(df_us_states, cases > 0)
@@ -99,6 +110,8 @@ print(pq)
 
 ```
 
+### Log/Log of Deaths over Cumulative Sum
+
 ```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE, warning=FALSE}
 #filtered_cases <- subset(df_us_states, cases > 0)
 pq <- ggplot(df_us_states, aes(x=deaths, y=delta_deaths)) +
@@ -107,6 +120,57 @@ pq <- ggplot(df_us_states, aes(x=deaths, y=delta_deaths)) +
   scale_x_continuous(trans='log10') +
   scale_y_continuous(trans='log10') +
   ggtitle("Covid deaths rate of change by state") +
+  #theme(axis.text.y = element_text(size = 6)) +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+print(pq)
+
+```
+
+## Weekly Rate of Changes
+
+In order to smooth out the curves in the previous graphs, look at them on a weekly basis.
+
+```{r, echo=FALSE}
+# let's group weekly to aggregate the lags we've already conmputed
+df_us_states_weekly <- df_us_states %>%
+  group_by(state, week=week(date)) %>%
+  summarize(weekly_delta_cases = sum(delta_cases),
+            weekly_delta_deaths = sum(delta_deaths),
+            weekly_cases = max(cases),
+            weekly_deaths = max(deaths)) %>%
+  ungroup() %>%
+  arrange(state, week)
+```
+
+### Weekly Range of Change of Cases by State
+
+```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE, warning=FALSE}
+#filtered_cases <- subset(df_us_states, cases > 0)
+pq <- ggplot(df_us_states_weekly, aes(x=weekly_cases, y=weekly_delta_cases)) +
+  geom_line() + 
+  facet_wrap( . ~ state) +
+  scale_x_continuous(trans='log10') +
+  scale_y_continuous(trans='log10') +
+  ggtitle("Covid - weekly cases rate of change by state") +
+  #theme(axis.text.y = element_text(size = 6)) +
+  theme(strip.text.x = element_text(size = 9)) +
+  theme(strip.text.y = element_text(size = 9)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+print(pq)
+
+```
+
+### Weekly Range of Change of Deaths by State
+
+```{r, fig.width=12, fig.height=10, echo=FALSE, message=FALSE, warning=FALSE}
+pq <- ggplot(df_us_states_weekly, aes(x=weekly_deaths, y=weekly_delta_deaths)) +
+  geom_line() + 
+  facet_wrap( . ~ state) +
+  scale_x_continuous(trans='log10') +
+  scale_y_continuous(trans='log10') +
+  ggtitle("Covid - weekly deaths rate of change by state") +
   #theme(axis.text.y = element_text(size = 6)) +
   theme(strip.text.x = element_text(size = 9)) +
   theme(strip.text.y = element_text(size = 9)) +
