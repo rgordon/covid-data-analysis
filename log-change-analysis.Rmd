@@ -32,6 +32,8 @@ powers_of_2 = 2 ** (1:max_y)
 
 ```
 
+Last date for states data is `r max(df_us_states$date)`
+
 ## Extract daily changes
 ```{r, echo=FALSE}
 # compute lag so that we can see actual change day by day
